@@ -13,7 +13,7 @@ RUN set -x \
     && apt-get install --no-install-recommends -qfy software-properties-common \
     && add-apt-repository ppa:wine/wine-builds \
     && apt-get update -qy \
-    && apt-get install --no-install-recommends -qfy $WINE_VERSION winetricks wget \
+    && apt-get install --no-install-recommends -qfy $WINE_VERSION winbind winetricks wget \
     && apt-get clean
 
 # wine settings
@@ -44,6 +44,18 @@ RUN set -x \
 
 # install pyinstaller
 RUN /usr/bin/pip install pyinstaller==$PYINSTALLER_VERSION
+
+WORKDIR /tmp/git
+
+RUN wget https://github.com/git-for-windows/git/releases/download/v2.11.0.windows.1/MinGit-2.11.0-32-bit.zip \
+    && unzip MinGit-2.11.0-32-bit.zip \
+    && cd /tmp \
+    && mv /tmp/git /wine/drive_c/git \
+    && echo "Regedit 4" >> /tmp/git.reg \
+    && echo "[HKEY_CURRENT_USER\Environment]" >> /tmp/git.reg \
+    && echo '"Path" = "c:\\\\git\\\\cmd"' >> /tmp/git.reg \
+    && wine regedit /tmp/git.reg \
+    && while pgrep wineserver >/dev/null; do echo "Waiting for wineserver"; sleep 1; done
 
 # put the src folder inside wine
 RUN mkdir /src/ && ln -s /src /wine/drive_c/src
